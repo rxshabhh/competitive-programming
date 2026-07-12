@@ -29,6 +29,9 @@ int main() {
     // if(ok) cout << "Yes";
     // else cout << "No";
 
+
+    // this is the concept of chinese remainder
+
     ll cnt =1;
 
     for(auto val : a){
