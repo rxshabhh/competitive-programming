@@ -58,34 +58,43 @@ int main() {
 
     // tle on 19th test case
 
-    vector<ll> div;
+    // vector<ll> div;
 
-    for(int i=1;i*i<=n;i++){
+    for(ll i=1;i*i<=n;i++){
         if(n%i==0){
-            div.push_back(i);
-            if(i!=(n/i)){
-                div.push_back(n/i);
-            }
+
+            ll d1=i;
+            ll m1 = n/d1;
+
+            ll sum1 = m1*(2+(m1-1)*d1)/2;
+            res.insert(sum1);
+
+            ll d2 = n/i;
+
+            ll m2 = n/d2;
+
+            ll sum2 = m2*(2+(m2-1)*d2)/2;
+            res.insert(sum2);
         }
     }
 
 
 
-    for(ll x=1;x<div.size();x++){
+    // for(ll x=1;x<div.size();x++){  // this loop increases the time complexity
 
-        ll cnt=0;
+    //     ll cnt=0;
 
-        for(int i=1;i<=n;i+=div[x]){
-            cnt += i;
-        }
+    //     for(int i=1;i<=n;i+=div[x]){
+    //         cnt += i;
+    //     }
 
-        res.insert(cnt);
+    //     res.insert(cnt);
         
-    }
+    // }
 
-    ll sum = 1LL * (n*(n+1)/2);
+    // ll sum = 1LL * (n*(n+1)/2);
 
-    res.insert(sum);
+    // res.insert(sum);
 
     for(auto val : res){
         cout << val << " ";
