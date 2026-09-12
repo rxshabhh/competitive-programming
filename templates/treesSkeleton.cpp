@@ -3,279 +3,200 @@ using namespace std;
 
 typedef long long ll;
 
-const int N = 1e5+10;  // max value to store
+const int N = 2e5 + 10;  // Changed to 2e5+10 to handle standard CP limits 
 
+// Global variables for basic graph traversals
 vector<int> adj[N];
 bool vis[N];
 
+/* 
+   1. BASIC DFS
+    */
+void dfs_basic(int vertex) {
+    vis[vertex] = 1; // Mark as visited after entering
 
-void dfs(int vertex){
+    for (int child : adj[vertex]) {
+        if (vis[child]) continue; // Skip if already visited
+        
+        // Actions before entering child can go here
+        dfs_basic(child);
+        // Actions after returning from child can go here
+    }
+}
+==
+/* 
+   2. IN-TIME AND OUT-TIME (DFS)
+    */
+map<int, pair<int, int>> time_tree;  // key: node -> {in_time, out_time}
+int timer = 0;
 
-    // after entering vertex
+void dfs_in_out(int vertex) {
+    timer++;
+    time_tree[vertex].first = timer; // Record entry time
     vis[vertex] = 1;
 
-    for(int child  : adj[vertex]){
-        // before entering vertex's child
-
-        if(vis[child]) continue;
-
-        dfs(child);
-        // returning back from child
+    for (int child : adj[vertex]) {
+        if (vis[child]) continue;
+        dfs_in_out(child);
     }
 
-    // returning back from vertex
+    // Record exit time after visiting all children
+    time_tree[vertex].second = timer;
+    timer++;
 }
 
-// In_time and out_time
-
-map<int,pair<int,int>> time_tree;  // key : {in time, out time}
-int t=0;
-
-void dfs(int vertex){
-
-    // after entering vertex
-
-    t++;
-    time_tree[vertex].first = t;
+/* 
+   3. LEVEL CALCULATION USING DFS
+    */
+void dfs_level(int vertex, vector<int>& level, int l = 0) {
     vis[vertex] = 1;
+    level[vertex] = l; // Store current level
 
-    for(int child  : adj[vertex]){
-        // before entering vertex's child
-
-        if(vis[child]) continue;
-
-        dfs(child);
-        // returning back from child
+    for (int child : adj[vertex]) {
+        if (vis[child]) continue;
+        dfs_level(child, level, l + 1);
     }
-
-    // returning back from vertex
-    time_tree[vertex].second = t;
-    t++;
 }
 
-// Level printing using DFS i.e number of level = height of the tree
-void dfs(int vertex, vector<int>& level, int l=0){
-
-    // after entering vertex
-    vis[vertex] = 1;
-
-    level[vertex] = l;
-
-    for(int child  : adj[vertex]){
-        // before entering vertex's child
-
-        if(vis[child]) continue;
-
-        dfs(child,level,l+1);
-        // returning back from child
-    }
-
-    // returning back from vertex
-}
-
-// BFS
-
-void bfs(int root){
-
-    queue<pair<int,int>> q;
-
-    // {node : parent}
-    q.push({1,0}); // root and child
+/* 
+   4. BASIC BFS (Node and Parent)
+   */
+void bfs_basic(int root) {
+    queue<pair<int, int>> q; // {node, parent}
+    q.push({root, 0}); 
     
-    while(q.empty()==false){
+    while (!q.empty()) {
         int node = q.front().first;
-        // now we have node
         int parent = q.front().second;
-        //now we have parent too
-
         q.pop();
 
-        for(auto child : adj[node]){
-            if(child == parent) continue;
-            q.push({child,node});
+        for (auto child : adj[node]) {
+            if (child == parent) continue; // Prevent infinite loop back to parent
+            q.push({child, node});
         }
     }
-
 }
 
-// Level using BFS
-void bfs(int root){
-
-    queue<pair<int,int>> q;
-
-    // {node : parent}
-    q.push({1,0}); // root and child
+/* 
+   5. BFS WITH LEVEL CALCULATION
+    */
+void bfs_level_calc(int root) {
+    queue<pair<int, int>> q; // {node, parent}
+    q.push({root, 0}); 
     int level = 0;
-
-    // each time in a queue we have level x and level x+1 only
     
-    while(q.empty()==false){
-
-        int k= q.size();
-
-        for(int i=0;i<k;i++){
+    while (!q.empty()) {
+        int k = q.size(); // Number of nodes at the current level
+        
+        for (int i = 0; i < k; i++) {
             int node = q.front().first;
-            // now we have node
             int parent = q.front().second;
-            //now we have parent too
-
             q.pop();
 
-            for(auto child : adj[node]){
-                if(child == parent) continue;
-                q.push({child,node});
+            // Process node here
+
+            for (auto child : adj[node]) {
+                if (child == parent) continue;
+                q.push({child, node});
             }
         }
-        level++; 
+        level++; // Increment level after processing all nodes at current depth
     }
-
 }
 
-// Printing kth parent of any node for q queries
-void dp_parent(int node, int par, vector<vector<int>>& adj, vector<vector<int>>& dp){
-
-    dp[node] =0;
-
-    for(int i=1;i<=16;i++){ // log n pre-computation
-
-        dp[node][i] = dp[dp[node][i-1]][i-1];
-    }
-
-    for(auto child : adj[node]){
-
-        if(child == par){
-            continue;
-        }
-
-        dfs(child,node,adj,dp);
-    }
-
-    // for each node we have 17 parents 
-
-
-}
-
-
-
-void solve(){
-
-    // for getting height 
-
-    vector<int> level(n+1,0);
-    int ans=0;
-    dfs(1,0,level);
-    for(int i=1;i<=n;i++){
-        ans = max(ans, level[i]+1);
-    }
-
-}
-
-// Printing kth parent for q queries
-
-int getKpar(int node, int k){
-
-
+/* 
+   6. BINARY LIFTING PRECOMPUTATION
+    */
+// Precomputes the 2^i th parent for every node
+void build_binary_lifting(int node, int par, vector<vector<int>>& adj_local, vector<vector<int>>& dp, vector<int>& level, int l = 0) {
     
-    for(int i=16;i>=0;i--){
-        if((k>>i) & 1){  // if ith bit is set in k
-            node = dp[node][i];
-        }
-    }
-
-    return node;
-
-}
-
-// LCA precomputation of level + solve3 function
-
-void dp_parent(int node, int par, vector<vector<int>>& adj, vector<vector<int>>& dp,vector<int>& level, int l=0){
-
-    dp[node] =0;
-    
-    // dp table calculation
-    for(int i=1;i<=16;i++){ // log n pre-computation
-
-        dp[node][i] = dp[dp[node][i-1]][i-1];
-    }
-
+    dp[node][0] = par; // The 2^0 (1st) parent is the direct parent
     level[node] = l;
-
-    for(auto child : adj[node]){
-
-        if(child == par){
-            continue;
-        }
-
-        dfs(child,node,adj,dp,level,l+1);
-
-        l
+    
+    // Fill the dp table for current node
+    // Max 18 bits required for N up to 200,000 (2^17 = 131072)
+    for (int i = 1; i <= 17; i++) { 
+        dp[node][i] = dp[dp[node][i - 1]][i - 1];
     }
 
-    // for each node we have 17 parents 
-
-
+    for (auto child : adj_local[node]) {
+        if (child == par) continue;
+        // FIXED: Correct recursive call name
+        build_binary_lifting(child, node, adj_local, dp, level, l + 1);
+    }
 }
 
-void solve3(){
+/* 
+   7. GET K-TH ANCESTOR
+    */
+// FIXED: Passed 'dp' as a parameter
+int getKpar(int node, int k, const vector<vector<int>>& dp) {
+    for (int i = 17; i >= 0; i--) {
+        if ((k >> i) & 1) {  // If the i-th bit is set in k
+            node = dp[node][i]; // Jump 2^i levels up
+        }
+    }
+    return node;
+}
 
-    // define adj, and all the basic things
+/* 
+   8. LOWEST COMMON ANCESTOR (LCA) SOLVER
+    */
+void solve_lca() {
+    int n, q; 
+    if(!(cin >> n >> q)) return;
 
-    vector<vector<int>> dp(n+1,vector<int>(17,0));  // for printing kth parent of any node for k queries
+    vector<vector<int>> adj_local(n + 1);
+    for (int i = 1; i < n; i++) {
+        int u, v; cin >> u >> v;
+        adj_local[u].push_back(v);
+        adj_local[v].push_back(u);
+    }
 
-    vector<int> level(n+1,0);
-    dp_parent(1,0,adj,dp,level);
+    // dp[node][i] stores the 2^i th ancestor
+    vector<vector<int>> dp(n + 1, vector<int>(18, 0)); 
+    vector<int> level(n + 1, 0);
 
-    // suppose queries is q
-    while(q--){
+    build_binary_lifting(1, 0, adj_local, dp, level);
 
-        int a,b; cin>>a>>b;
+    while (q--) {
+        int a, b; 
+        cin >> a >> b;
 
-        if(level[a]>level[b]) swap(a,b);
-
-        // a is at lesser level
+        // 1. Bring both nodes to the same level
+        if (level[a] > level[b]) swap(a, b);
+        int k = level[b] - level[a];
         
-        int k= level[b]-level[a];
+        // FIXED: passed dp to getKpar
+        b = getKpar(b, k, dp); 
 
-        b = getKpar(b,k);
-
-        // a and b are at same level
-
-        if(a==b){
-            cout << a << endl;
+        // 2. If they are the same node, that node is the LCA
+        if (a == b) {
+            cout << a << "\n";
             continue;
         }
 
-        for(int i=16;i>=1;i--){
-
-            if(dp[a][i] != dp[b][i]){
+        // 3. Jump together until they are just below the LCA
+        // FIXED: Loop MUST go down to 0, not 1.
+        for (int i = 17; i >= 0; i--) {
+            if (dp[a][i] != dp[b][i]) {
                 a = dp[a][i];
                 b = dp[b][i];
             }
-
-
         }
 
-        cout << dp[a][0] << endl;
-
-
-        
+        // The LCA is the direct parent of a (and b)
+        cout << dp[a][0] << "\n";
     }
 }
 
-
-
 int main() {
-
+    // Optimize standard I/O operations for speed
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
 
-    
-
-    
-
-
-
-    
+    // Call your required solver here
+    // solve_lca();
 
     return 0;
 }
