@@ -3,43 +3,69 @@ using namespace std;
 
 typedef long long ll;
 
+bool check(int mid, vector<int>& a, vector<int>& b){
+    
+    int n = a.size();
+
+    
+
+    for(int i=0;i<n;i++){
+        bool ok = false;
+
+        auto it = lower_bound(b.begin(),b.end(),a[i]);
+
+        if(it!=b.end()){
+            if(abs(*it-a[i]) <= mid){
+                ok = true;
+            
+            }
+        }
+
+        if(it!=b.begin()){
+
+            it--;
+            if(abs(*it-a[i]) <= mid){
+                ok = true;
+            }
+        }
+
+        if(!ok) return false;
+    }
+
+    return true;
+}
+
 int main() {
 
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
 
-    ll n,m; cin>>n>>m;
-    
-    vector<ll> cities(n); for(auto &x : cities) cin>>x;
-    vector<ll> towers(m); for(auto &x : towers) cin>>x;
+    int n,m; cin>>n>>m;
 
-    ll r = LLONG_MIN;
+    vector<int> a(n); for(auto &x : a) cin>>x;
 
-    for(int i=0;i<n;i++){
+    vector<int> b(m); for(auto &x : b) cin>>x;
 
-        ll tower_right = lower_bound(towers.begin(),towers.end(),cities[i]) - towers.begin();
+    int l = 0;
 
-        ll tower_leff = tower_right - 1;
+    int r = 2e9;
 
-        ll min_r = LLONG_MAX;
+    int ans = INT_MAX;
 
-        if(tower_right < m){
+    sort(b.begin(),b.end());
 
-            min_r = min(min_r, towers[tower_right]-cities[i]);
+    while(l<=r){
 
+        int mid = l + (r-l)/2;
+
+        if(check(mid,a,b)){
+            ans = min(ans,mid);
+            r=mid-1;
         }
-
-        if(tower_leff>=0){
-
-            min_r = min(min_r, cities[i]-towers[tower_leff]);
-            
-        }
-
-        r = max(r,min_r);
-
+        else l =mid+1;
     }
 
-    cout << r;
+    cout << ans;
 
     return 0;
 }
